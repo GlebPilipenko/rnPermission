@@ -1,41 +1,56 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
+  Alert,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
+import {
+  check,
+  openSettings,
+  PERMISSIONS,
+  request,
+  RESULTS,
+} from 'react-native-permissions';
 
 const App = () => {
+  const [isClicked, setIsClicked] = useState(false);
   const [isCameraGranted, setIsCameraGranted] = useState(false);
 
-  const handleCameraPermission = async () => {
-    const checkedResponse = await check(PERMISSIONS.IOS.CAMERA);
+  const handleStatusDenied = async () => {
+    const requestedResponse = await request(PERMISSIONS.IOS.CAMERA);
 
-    if (checkedResponse === RESULTS.GRANTED) {
-      console.log(1);
-      setIsCameraGranted(true);
-    } else if (checkedResponse === RESULTS.DENIED) {
-      const res2 = await request(PERMISSIONS.IOS.CAMERA);
-      console.log(2);
-      console.log(res2);
-      res2 === RESULTS.GRANTED
-        ? setIsCameraGranted(true)
-        : setIsCameraGranted(false);
-    }
+    requestedResponse === RESULTS.GRANTED
+      ? setIsCameraGranted(true)
+      : setIsCameraGranted(false);
   };
 
+  const handleCameraPermission = useCallback(async () => {
+    const checkedResponse = await check(PERMISSIONS.IOS.CAMERA);
+
+    if (isClicked && checkedResponse === RESULTS.BLOCKED) {
+      return openSettings().catch(() => Alert.alert('Open settings'));
+    }
+
+    if (checkedResponse === RESULTS.GRANTED) {
+      return setIsCameraGranted(true);
+    }
+
+    await handleStatusDenied();
+  }, [isClicked]);
+
+  const onPress = () => setIsClicked(true);
+
   useEffect(() => {
-    console.log('u');
     (async () => await handleCameraPermission())();
-  }, []);
+  }, [isClicked, handleCameraPermission]);
 
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.container}>
-        <TouchableOpacity style={styles.appButtonContainer}>
+        <TouchableOpacity onPress={onPress} style={styles.appButtonContainer}>
           <Text style={styles.appButtonText}>Click Me</Text>
         </TouchableOpacity>
       </View>
