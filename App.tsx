@@ -1,26 +1,19 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {
-  Alert,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  check,
-  openSettings,
-  PERMISSIONS,
-  request,
-  RESULTS,
-} from 'react-native-permissions';
+import React, { useCallback, useEffect, useState } from "react";
+import { Alert, Platform, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { check, openSettings, PERMISSIONS, request, RESULTS } from "react-native-permissions";
+
+const CAMERA_KEY: any = Platform.select({
+  android: PERMISSIONS.ANDROID.CAMERA,
+  ios: PERMISSIONS.IOS.CAMERA,
+});
 
 const App = () => {
   const [isClicked, setIsClicked] = useState(false);
   const [isCameraGranted, setIsCameraGranted] = useState(false);
 
   const handleStatusDenied = async () => {
-    const requestedResponse = await request(PERMISSIONS.IOS.CAMERA);
+    const requestedResponse = await request(CAMERA_KEY);
+    console.log(2, requestedResponse);
 
     requestedResponse === RESULTS.GRANTED
       ? setIsCameraGranted(true)
@@ -28,9 +21,11 @@ const App = () => {
   };
 
   const handleCameraPermission = useCallback(async () => {
-    const checkedResponse = await check(PERMISSIONS.IOS.CAMERA);
+    const checkedResponse = await check(CAMERA_KEY);
+    console.log(1, checkedResponse);
 
     if (isClicked && checkedResponse === RESULTS.BLOCKED) {
+      console.log(isClicked);
       return openSettings().catch(() => Alert.alert('Open settings'));
     }
 
